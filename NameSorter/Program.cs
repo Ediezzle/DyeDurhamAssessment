@@ -1,92 +1,51 @@
 ﻿// See https://aka.ms/new-console-template for more information
 // <summary>
-/// Main program orchestrating the name sorting workflow.
-/// Demonstrates proper separation of concerns and dependency injection principles.
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NameSorter.Application;
+
+/// App entry point
 /// </summary>
 public class Program
 {
-    private const string OutputFileName = "sorted-names-list.txt";
-
-    private readonly IFileService _fileService;
-    private readonly INameSortingService _nameSortingService;
-
-    private readonly INameParsingService _nameParsingService;
-
-    public Program(IFileService fileService, INameParsingService nameParsingService, INameSortingService nameSortingService)
+    static async Task Main(string[] args)
     {
-        _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
-        _nameParsingService = nameParsingService ?? throw new ArgumentNullException(nameof(nameParsingService));
-        _nameSortingService = nameSortingService ?? throw new ArgumentNullException(nameof(nameSortingService));
-    }
+        // Create host builder with DI container
+        var host = Host.CreateDefaultBuilder(args)
+            .ConfigureServices((context, services) =>
+            {
+                // Register services
+                services.AddTransient<IFileService, FileService>();
+                services.AddTransient<INameParsingService, NameParsingService>();
+                services.AddTransient<INameSortingService, NameSortingService>();
+                services.AddTransient<INameParsingService, NameParsingService>();
+                services.AddTransient<INameSortingApp, NameSortingApp>();
 
-    public static async Task<int> Main(string[] args)
-    {
-        IFileService fileService = new FileService();
-        INameParsingService nameParsingService = new NameParsingService();
-        INameSortingService nameSortingService = new NameSortingService();
+                services.AddLogging(builder =>
+                {
+                    builder.AddConsole();
+                    builder.SetMinimumLevel(LogLevel.Information);
+                });
+            })
+            .Build();
 
-        var program = new Program(fileService, nameParsingService, nameSortingService);
-        return await program.RunAsync(args);
-    }
-
-
-    // <summary>
-    /// Main application workflow with comprehensive error handling and user feedback.
-    /// </summary>
-    public async Task<int> RunAsync(string[] args)
-    {
         try
         {
-            ValidateArguments(args);
-            var inputFilePath = args[0];
-
-            Console.WriteLine($"Reading names from: {inputFilePath}");
-            var unsortedNames = await _fileService.ReadAllLinesAsync(inputFilePath);
-
-            Console.WriteLine($"Sorting {unsortedNames.Count()} names...");
-            foreach (var name in unsortedNames)
-            {
-                Console.WriteLine(name);
-            }
-
-            var lines = await _fileService.ReadAllLinesAsync(args[0]);
-            var people = _nameParsingService.Parse(lines);
-
-            var sortedPeople = _nameSortingService.SortAsc(people);
-
-            Console.WriteLine("\nSorted names:");
-            foreach (var person in sortedPeople)
-            {
-                Console.WriteLine(person);
-            }
-
-            var sortedNames = sortedPeople.Select(p => p.ToString());
-
-            await _fileService.WriteAllLinesAsync("sorted-names-list.txt", sortedNames);
-
-            Console.WriteLine($"\nSuccessfully sorted {sortedNames.Count()} names");
-            return 0;
+            // Resolve and run the application
+            var app = host.Services.GetRequiredService<INameSortingApp>();
+            await app.RunAsync(args);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Unexpected error: {ex.Message}");
-            return 1;
+            Console.WriteLine($"Application error: {ex.Message}");
         }
-    }
-
-    private static void ValidateArguments(string[] args)
-    {
-        if (args == null || args.Length != 1)
+        finally
         {
-            throw new Exception(
-                $"Usage: name-sorter <input-file-path>\n" +
-                $"Example: name-sorter ./unsorted-names-list.txt");
+            await host.StopAsync();
         }
 
-        var inputFilePath = args[0];
-        if (string.IsNullOrWhiteSpace(inputFilePath))
-        {
-            throw new Exception("Input file path cannot be empty.");
-        }
+        Console.WriteLine("\nPress any key to exit...");
+        Console.ReadKey();
     }
 }

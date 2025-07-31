@@ -1,0 +1,16 @@
+# Name Sorter
+
+A simple .NET Core console application that reads a list of names from a text file, sorts them by last name (and given names in case of ties), prints the sorted names to the console, and writes them to a file.
+
+The program can be executed in the following manner:
+name-sorter ./unsorted-names-list.txt
+
+You may skip passing the file path argument
+
+## ✨ Features
+
+- Sorts names by last name, then by given names
+- Outputs to both console and file (`sorted-names-list.txt`)
+- Handles names with up to three given names
+- Clean, maintainable, and testable design following **SOLID** principles
+- Includes

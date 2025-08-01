@@ -19,7 +19,6 @@ public class Program
                 services.AddTransient<IFileService, FileService>();
                 services.AddTransient<INameParsingService, NameParsingService>();
                 services.AddTransient<INameSortingService, NameSortingService>();
-                services.AddTransient<INameParsingService, NameParsingService>();
                 services.AddTransient<INameSortingApp, NameSortingApp>();
 
                 services.AddLogging(builder =>

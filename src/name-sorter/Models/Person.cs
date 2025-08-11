@@ -1,4 +1,5 @@
-// Models/Person.cs
+
+
 public class Person : IComparable<Person>
 {
     public List<string> GivenNames { get; }
@@ -17,8 +18,8 @@ public class Person : IComparable<Person>
             return 1;
 
         int lastNameCompare = LastName.CompareTo(other.LastName);
-        return lastNameCompare != 0 
-            ? lastNameCompare 
+        return lastNameCompare != 0
+            ? lastNameCompare
             : string.Join(" ", GivenNames).CompareTo(string.Join(" ", other.GivenNames));
     }
 
